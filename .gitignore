@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Chroma vector store (regenerate with: python load_chroma.py)
+chroma_db/

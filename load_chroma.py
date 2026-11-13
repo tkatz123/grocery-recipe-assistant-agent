@@ -25,22 +25,19 @@ COLLECTION = "recipes"
 
 
 def to_document(r):
-    ing_lines = "\n".join(
-        f"- {i['measure']} {i['ingredient']}".replace("-  ", "- ") for i in r["ingredients"]
-    )
+    """Only searchable recipe fields; never measures or instructions."""
+    ingredients = ", ".join(i["ingredient"] for i in r["ingredients"])
     return (
         f"Recipe: {r['name']}\n"
         f"Category: {r['category']}\n"
         f"Cuisine: {r['area']}\n"
-        f"Tags: {', '.join(r['tags'])}\n\n"
-        f"Ingredients:\n{ing_lines}\n\n"
-        f"Instructions:\n{r['instructions']}"
+        f"Ingredients: {ingredients}"
     )
-
 
 def to_metadata(r):
     # Chroma metadata values must be str/int/float/bool (no None, no lists)
     return {
+        "recipe_id": str(r["id"]),
         "name": r["name"],
         "category": r["category"],
         "area": r["area"],
@@ -66,7 +63,7 @@ def load():
     for start in range(0, len(recipes), batch):
         chunk = recipes[start : start + batch]
         collection.upsert(
-            ids=[r["id"] for r in chunk],
+            ids=[str(r["id"]) for r in chunk],
             documents=[to_document(r) for r in chunk],
             metadatas=[to_metadata(r) for r in chunk],
         )
@@ -101,3 +98,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

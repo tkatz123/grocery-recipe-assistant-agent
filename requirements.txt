@@ -1,3 +1,5 @@
-requests>=2.31
-chromadb>=1.5.9,<2  # chroma_db/ was built with 1.5.9
-truststore>=0.10
+chromadb>=1.0,<2
+sentence-transformers>=5,<6
+requests>=2.32,<3
+truststore>=0.10,<1
+streamlit>=1.40,<2

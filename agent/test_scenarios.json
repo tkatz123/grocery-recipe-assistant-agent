@@ -1,0 +1,101 @@
+[
+  {
+    "name": "budget_50",
+    "prompt": "I have $50 to spend at the store. What should I buy, and what are 2 recipes I can make with it?",
+    "pass_if": [
+      "search_recipes is called before any search_prices call",
+      "Exactly 2 recipes are recommended",
+      "search_prices is called only for non-staple ingredients of those 2 recipes",
+      "estimate_basket is called with budget 50 and the final basket has within_budget true",
+      "Every non-staple ingredient of both recipes is on the shopping list",
+      "Weight items are in the basket with pounds and shown as pounds at a price per pound"
+    ]
+  },
+  {
+    "name": "tight_budget_15",
+    "prompt": "I only have $15 for groceries this week. Give me one dinner recipe and a shopping list.",
+    "pass_if": [
+      "estimate_basket is called with budget 15",
+      "The final basket has within_budget true, or the agent clearly says it cannot fit and offers a cheaper option",
+      "No total above $15 is presented as fitting the budget",
+      "Every non-staple ingredient of the recipe is on the shopping list"
+    ]
+  },
+  {
+    "name": "have_ingredients",
+    "prompt": "I have chicken, rice and garlic at home. What can I make, and what would the rest of the ingredients cost?",
+    "pass_if": [
+      "search_recipes is called with chicken, rice and garlic as ingredients",
+      "chicken, rice and garlic are NOT priced, since the user has them",
+      "The recipe's other non-staple ingredients are priced and totaled with estimate_basket",
+      "No budget is invented"
+    ]
+  },
+  {
+    "name": "peanut_allergy",
+    "prompt": "I'm allergic to peanuts. I have chicken and coconut milk. What Thai dish can I make?",
+    "pass_if": [
+      "No recommended recipe contains peanuts or a peanut product (check the full ingredient list)",
+      "The agent acknowledges the allergy",
+      "If an ingredient's safety is uncertain (for example curry paste), the agent says so instead of guessing"
+    ]
+  },
+  {
+    "name": "vegetarian",
+    "prompt": "I'm vegetarian. Suggest 2 recipes I can make for under $30 and tell me what to buy.",
+    "pass_if": [
+      "No recommended recipe contains meat, fish, or meat-based stock (chicken stock and fish sauce count)",
+      "The agent checks ingredients rather than trusting the category: 9 of the 100 recipes TheMealDB labels Vegetarian contain meat, stock or fish sauce",
+      "estimate_basket is called with budget 30 and the final basket has within_budget true",
+      "Exactly 2 recipes are recommended"
+    ]
+  },
+  {
+    "name": "memory_followup",
+    "turns": [
+      "I have $40 to spend. Give me 1 dinner recipe and a shopping list.",
+      "Actually I'm vegetarian. Redo it."
+    ],
+    "pass_if": [
+      "Turn 2 keeps the $40 budget without being told again (estimate_basket is called with budget 40)",
+      "Turn 2 recommends a recipe with no meat, fish, or meat-based stock",
+      "Turn 2 gives a full new shopping list and total, not just a recipe name"
+    ]
+  },
+  {
+    "name": "walkthrough",
+    "turns": [
+      "I have chicken, rice and garlic. Suggest one recipe I can make.",
+      "Sounds good, let's make it. Walk me through it.",
+      "Done, what's next?"
+    ],
+    "pass_if": [
+      "get_recipe is called with the recipe_id from turn 1, without the user repeating the recipe name",
+      "Turn 2 gives only the first step (or the prep step), not the whole recipe",
+      "Turn 3 gives the next step, continuing from turn 2 rather than starting over"
+    ]
+  },
+  {
+    "name": "long_term_memory",
+    "conversations": [
+      ["I'm allergic to peanuts and I'm vegetarian. Please remember that for next time."],
+      ["Suggest one dinner recipe and a shopping list for $25."]
+    ],
+    "pass_if": [
+      "Conversation 1 calls save_profile with peanuts as an allergy and vegetarian as a dietary restriction",
+      "Conversation 2 calls get_profile before anything else, in a fresh thread with no short-term memory of conversation 1",
+      "Conversation 2 recommends a recipe with no meat, fish, meat-based stock or peanuts, without the user repeating it",
+      "Conversation 2 uses the $25 budget given in that conversation"
+    ]
+  },
+  {
+    "name": "impossible_request",
+    "prompt": "I have $5 to feed 10 people at a dinner party. What should I buy?",
+    "pass_if": [
+      "The agent says plainly that $5 for 10 people is not realistic",
+      "No basket over $5 is presented as fitting the budget",
+      "The agent offers a realistic alternative (a higher budget or fewer people) instead of refusing outright",
+      "No invented recipes: anything recommended comes from search_recipes"
+    ]
+  }
+]

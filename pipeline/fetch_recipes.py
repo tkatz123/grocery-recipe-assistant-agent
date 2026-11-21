@@ -16,7 +16,7 @@ import truststore
 truststore.inject_into_ssl()
 
 BASE = "https://www.themealdb.com/api/json/v1/1"  # "1" = free test/education key
-OUT_PATH = Path(__file__).parent / "data" / "recipes.json"
+OUT_PATH = Path(__file__).resolve().parent.parent / "data" / "recipes.json"
 
 
 def fetch_all_meals():

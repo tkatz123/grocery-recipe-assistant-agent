@@ -4,7 +4,7 @@ import json
 import re
 import unicodedata
 
-from load_chroma import DB_PATH, COLLECTION, RECIPES_PATH, to_document
+from pipeline.load_chroma import DB_PATH, COLLECTION, RECIPES_PATH, to_document
 
 
 def normalize(name):

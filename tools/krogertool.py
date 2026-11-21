@@ -1,7 +1,7 @@
 """Live Kroger product prices. Credentials stay outside tool arguments."""
 import math
 import time
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 import requests
 import streamlit as st
@@ -118,30 +118,52 @@ def search_grocery_prices(ingredient: str, limit: int = 5) -> dict:
 
 
 def estimate_selected_basket(items: list[dict], budget: float | None = None) -> dict:
-    """Total confirmed fixed-price packages: [{product: <option>, quantity: 2}].
+    """Total a basket of selected products, priced per package or per pound.
+
+    Each entry is one of:
+      {product: <option>, quantity: 2}      for sold_by UNIT (fixed-price packages)
+      {product: <option>, pounds: 1.5}      for sold_by WEIGHT (price is per pound)
 
     Product options should come from search_grocery_prices. The caller must
-    confirm ingredient relevance and package quantity before selecting them.
+    confirm ingredient relevance and amounts before selecting them.
     """
     if budget is not None and (not math.isfinite(budget) or budget < 0):
         raise ValueError("budget must be a finite nonnegative amount")
     total = Decimal("0")
     lines = []
     for entry in items:
-        product, quantity = entry["product"], entry["quantity"]
-        if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 1:
-            raise ValueError("Each quantity must be a positive integer package count")
-        if product.get("sold_by") not in (None, "", "UNIT"):
-            raise ValueError("Variable-weight products need an explicit weight calculation")
+        product = entry["product"]
         price = positive_price(product.get("price"))
         if price is None:
             raise ValueError(f"No usable price for {product.get('name', 'product')}")
-        subtotal = Decimal(str(price)) * quantity
+        sold_by = product.get("sold_by")
+
+        if sold_by == "WEIGHT":
+            # Kroger lists variable-weight items at a price per pound.
+            pounds = entry.get("pounds")
+            if (isinstance(pounds, bool) or not isinstance(pounds, (int, float))
+                    or not math.isfinite(pounds) or pounds <= 0):
+                raise ValueError(f"{product.get('name', 'Weight item')} is sold by weight: "
+                                 "give a positive number of pounds, for example 1.5")
+            subtotal = (Decimal(str(price)) * Decimal(str(pounds))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            line = {"product": product, "pounds": pounds, "subtotal": float(subtotal)}
+
+        elif sold_by in (None, "", "UNIT"):
+            quantity = entry.get("quantity")
+            if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 1:
+                raise ValueError("Each quantity must be a positive integer package count")
+            subtotal = Decimal(str(price)) * quantity
+            line = {"product": product, "quantity": quantity, "subtotal": float(subtotal)}
+
+        else:
+            raise ValueError(f"Unsupported sold_by value {sold_by!r} for {product.get('name', 'product')}")
+
         total += subtotal
-        lines.append({"product": product, "quantity": quantity, "subtotal": float(subtotal)})
+        lines.append(line)
     return {"items": lines, "estimated_total": float(total), "currency": "USD",
             "budget": budget, "within_budget": total <= Decimal(str(budget)) if budget is not None else None,
-            "note": "Estimate for selected packages only; excludes taxes, fees, and unpriced ingredients."}
+            "note": "Estimate only; excludes taxes, fees, and unpriced ingredients. "
+                    "Weight items vary with the actual package weight."}
 
 
 # Generic JSON Schema for registration with your agent framework.

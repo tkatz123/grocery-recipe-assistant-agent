@@ -1,10 +1,10 @@
 """Load data/recipes.json into a persistent Chroma collection (one document per recipe).
 
-Run fetch_recipes.py first. Re-running is safe: upsert by recipe id avoids duplicates.
+Run pipeline/fetch_recipes.py first (python -m pipeline.fetch_recipes). Re-running is safe: upsert by recipe id avoids duplicates.
 
 Usage:
-    python load_chroma.py                       # load, then run sample queries
-    python load_chroma.py --query "spicy noodle soup" --n 5
+    python -m pipeline.load_chroma                       # load, then run sample queries
+    python -m pipeline.load_chroma --query "spicy noodle soup" --n 5
 """
 
 import argparse
@@ -18,9 +18,9 @@ import truststore
 # certificate store so this works behind TLS-inspecting antivirus/proxies.
 truststore.inject_into_ssl()
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 RECIPES_PATH = ROOT / "data" / "recipes.json"
-DB_PATH = ROOT / "chroma_db"
+DB_PATH = ROOT / "data" / "chroma_db"
 COLLECTION = "recipes"
 
 

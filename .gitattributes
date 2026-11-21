@@ -1,2 +1,2 @@
 # Chroma vector store files are binary: never convert line endings or diff them
-chroma_db/** binary
+data/chroma_db/** binary

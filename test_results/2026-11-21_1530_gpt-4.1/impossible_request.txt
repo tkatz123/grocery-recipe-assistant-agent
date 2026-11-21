@@ -1,0 +1,6 @@
+--- human
+I have $5 to feed 10 people at a dinner party. What should I buy?
+--- ai
+A $5 budget is not enough to feed 10 people a full dinner—at current grocery prices, even the simplest meals for a group this size will cost more. For $5, you could buy a couple of loaves of bread and some peanut butter, or a large bag of rice and a few eggs, but not a full dinner for 10.
+
+For a realistic dinner party meal (even something basic like pasta with sauce), you’ll need at least $15–$20. Would you like to see what you could make for $5 (for example, a snack or side), or would you like ideas for a simple dinner for 10 with a higher budget? Let me know how you’d like to proceed!

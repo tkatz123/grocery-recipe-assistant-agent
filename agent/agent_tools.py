@@ -1,8 +1,70 @@
+import streamlit as st
 from langchain.tools import tool, ToolRuntime
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
 from tools.retrieve import RecipeRetriever, normalize
 from tools.krogertool import search_grocery_prices, estimate_selected_basket
 
 retriever = RecipeRetriever()
+
+
+# ============== Product relevance check ==============
+# Kroger's search ranks by keyword, so "beef cutlet" can return a cutlet sauce and
+# "mixed grain" can return cereal bars. A similarity score cannot fix this: it would
+# also reject real matches whose names share no words (courgettes vs. zucchini).
+# So a small LLM judges each product, and non-matches never reach the agent.
+
+class ProductVerdict(BaseModel):
+    index: int = Field(description="The product's number from the list")
+    is_match: bool = Field(description="True only if the product is the ingredient itself, in a form a home cook would buy to cook with")
+
+
+class ProductVerdicts(BaseModel):
+    verdicts: list[ProductVerdict]
+
+
+JUDGE_PROMPT = """You check grocery search results for a recipe ingredient.
+
+Ingredient needed: {ingredient}
+
+Products the store returned:
+{listing}
+
+For EACH product, decide whether it IS the ingredient, in a form a home cook would buy to use it in a recipe.
+
+A match: the ingredient itself, fresh, frozen, canned, dried or ground. Different brands, package sizes and cuts of the same food are fine. Recipe ingredient names are often British: courgette = zucchini, aubergine = eggplant, coriander leaves = cilantro, minced beef = ground beef, tinned = canned, spring onion = green onion, double cream = heavy cream.
+
+Not a match: a sauce, seasoning, mix or dressing named after the ingredient (steak sauce is not steak); a snack, drink, cereal or ready meal (breakfast bars are not grain); a different food that only shares a word (chili-style diced tomatoes are not red chilli); a flavored version when the plain ingredient is needed (strawberry yogurt is not yogurt); cooked deli meat when raw meat is needed for cooking.
+
+Return a verdict for every product number."""
+
+_judge = ChatOpenAI(
+    model="gpt-4.1-mini",
+    api_key=st.secrets["openai"]["api_key"],
+    temperature=0,
+).with_structured_output(ProductVerdicts)
+
+
+# Every product search_prices has returned, by product_id. estimate_basket accepts only
+# these and always uses this stored copy, never the model's, so an invented product
+# (seen in testing: "Mixed Grain", product_id 0000000000000, $3.00) or an edited price
+# is rejected instead of being totaled.
+_returned_products = {}
+
+
+def _matching_products(ingredient, products):
+    """Keep only the products the judge says really are the ingredient."""
+    if not products:
+        return products
+    listing = "\n".join(f"{i}. {p['name']} ({p['size']})" for i, p in enumerate(products))
+    try:
+        result = _judge.invoke(JUDGE_PROMPT.format(ingredient=ingredient, listing=listing))
+    except Exception:
+        # If the check itself fails, fall back to the unfiltered list rather than
+        # blocking the shopping list; the agent's own product rules still apply.
+        return products
+    keep = {v.index for v in result.verdicts if v.is_match}
+    return [p for i, p in enumerate(products) if i in keep]
 
 @tool
 def search_recipes(query: str, ingredients: list[str]) -> list[dict]:
@@ -73,7 +135,10 @@ def search_prices(ingredient: str) -> list[dict]:
 
     Returns a list of product options with product_id, name, brand, size, price
     (USD, sale price if there is one, None if Kroger lists no price) and sold_by.
-    Pick the option that best matches the ingredient and a sensible package size.
+    Products that are not actually the ingredient (sauces, snacks, look-alikes)
+    are already removed. Pick the option with a sensible package size.
+    An empty list means the store has nothing that matches: retry once with a
+    plain American name, then tell the user the ingredient was not found.
     Prices are store listed prices and exclude tax.
     """
 
@@ -96,7 +161,13 @@ def search_prices(ingredient: str) -> list[dict]:
 
             products.append(products_dict)
 
-        return products
+        # Drop products that are not actually the ingredient (see _matching_products).
+        matches = _matching_products(ingredient, products)
+        # Remember every product actually returned, so estimate_basket can refuse
+        # products the model made up and always use the real price.
+        for p in matches:
+            _returned_products[p['product_id']] = p
+        return matches
 
     except (RuntimeError, ValueError) as e:
         return {'error': str(e)}
@@ -126,6 +197,8 @@ def check_coverage(items, recipe_ids, user_has):
     the "ingredient" tag of a basket item. Returns {recipe name: [uncovered]}.
     """
     in_basket = {normalize(entry.get("ingredient") or "") for entry in items}
+    # A tag covers a longer recipe name built from it: "garlic" covers "Garlic Clove".
+    basket_words = [set(tag.split()) for tag in in_basket]
     user_words = [set(normalize(i).split()) for i in user_has]
     coverage = {}
     for recipe_id in recipe_ids:
@@ -133,7 +206,8 @@ def check_coverage(items, recipe_ids, user_has):
         uncovered = []
         for item in recipe["ingredients"]:
             name = normalize(item["ingredient"])
-            if not name or name in STAPLES or name in in_basket or _user_has(name, user_words):
+            if (not name or name in STAPLES or name in in_basket
+                    or _user_has(name, basket_words) or _user_has(name, user_words)):
                 continue
             uncovered.append(item["ingredient"])
         coverage[recipe["name"]] = uncovered
@@ -171,6 +245,18 @@ def estimate_basket(items: list[dict], recipe_ids: list[str],
     If you get an error, read it, fix the call, and try again.
     """
 
+    # Only products search_prices really returned, using the stored copy (real name and price).
+    checked = []
+    for entry in items:
+        product = entry.get("product") or {}
+        stored = _returned_products.get(product.get("product_id"))
+        if stored is None:
+            return {'error': f"{product.get('name', 'A product')} was not returned by search_prices. "
+                             "Only use products exactly as search_prices returned them. If the store "
+                             "has nothing for an ingredient, leave it out and tell the user it was not found."}
+        checked.append({**entry, "product": stored})
+    items = checked
+
     try:
         result = estimate_selected_basket(items, budget)
         coverage = check_coverage(items, recipe_ids, user_has or [])
@@ -181,6 +267,11 @@ def estimate_basket(items: list[dict], recipe_ids: list[str],
 
     result['uncovered'] = coverage
     result['all_covered'] = not any(coverage.values())
+    if not result['all_covered']:
+        result['uncovered_hint'] = (
+            "Tag each item with the recipe's own ingredient name, even if you searched under "
+            "another name (for example tag zucchini as 'Courgettes'). Retag and call again, or "
+            "price the missing ingredient. If the store has nothing for it, tell the user.")
     return result
 
 def _load_profile(runtime):

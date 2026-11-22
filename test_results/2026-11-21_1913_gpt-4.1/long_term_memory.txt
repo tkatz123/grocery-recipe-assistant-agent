@@ -1,0 +1,64 @@
+=== conversation 1
+--- human
+I'm allergic to peanuts and I'm vegetarian. Please remember that for next time.
+--- ai
+
+CALL save_profile {"allergies": ["peanuts"], "dietary_restrictions": ["vegetarian"]}
+--- tool
+{"allergies": ["peanuts"], "dietary_restrictions": ["vegetarian"]}
+--- ai
+Got it! I'll remember that you're allergic to peanuts and follow a vegetarian diet for next time. All my future suggestions will keep those in mind. If you have any other preferences or restrictions, just let me know!
+=== conversation 2
+--- human
+Suggest one dinner recipe and a shopping list for $25.
+--- ai
+
+CALL get_profile {}
+--- tool
+{"allergies": ["peanuts"], "dietary_restrictions": ["vegetarian"]}
+--- ai
+
+CALL search_recipes {"query": "vegetarian dinner", "ingredients": []}
+--- tool
+[{"recipe_id": "52863", "name": "Vegetarian Casserole", "category": "Vegetarian", "area": "British", "matched_ingredients": [], "missing_ingredients": ["carrots", "celery", "courgettes", "cumin", "garlic", "lentils", "onion", "paprika", "rapeseed oil", "red pepper", "thyme", "tomato", "vegetable stock cube", "yellow pepper"]}, {"recipe_id": "52811", "name": "Ribollita", "category": "Vegetarian", "area": "Italian", "matched_ingredients": [], "missing_ingredients": ["canned tomatoes", "cannellini beans", "carrots", "celery", "garlic", "kale", "olive oil", "onion", "parmesan", "red onions", "rosemary", "thyme", "water", "wholegrain bread"]}, {"recipe_id": "52867", "name": "Vegetarian Chilli", "category": "Vegetarian", "area": "British", "matched_ingredients": [], "missing_ingredients": ["chopped tomatoes", "kidney beans", "mixed grain", "roasted vegetables"]}, {"recipe_id": "53491", "name": "Shopska Salad", "category": "Vegetarian", "area": "", "matched_ingredients": [], "missing_ingredients": ["cucumber", "feta", "green pepper", "olive oil", "parsley", "red onions", "salt", "tomatoes"]}, {"recipe_id": "52769", "name": "Kapsalon", "category": "Lamb", "area": "Netherlands", "matched_ingredients": [], "missing_ingredients": ["cucumber", "doner meat", "fries", "garlic sauce", "gouda cheese", "hotsauce", "lettuce", "tomato"]}]
+--- ai
+
+CALL search_prices {"ingredient": "chopped tomatoes"}
+CALL search_prices {"ingredient": "kidney beans"}
+CALL search_prices {"ingredient": "mixed grain"}
+CALL search_prices {"ingredient": "roasted vegetables"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- ai
+
+CALL search_prices {"ingredient": "canned diced tomatoes"}
+CALL search_prices {"ingredient": "canned kidney beans"}
+CALL search_prices {"ingredient": "brown rice"}
+CALL search_prices {"ingredient": "frozen mixed vegetables"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- tool
+{"error": "Kroger products request failed (HTTP 403)"}
+--- ai
+I'm having trouble accessing live grocery prices right now, so I can't provide an exact shopping list with prices at this moment. However, I can still suggest a great vegetarian, peanut-free dinner recipe for you, and list the ingredients you would need to buy. 
+
+Using your saved budget of $25 and keeping it vegetarian and peanut-free, I recommend:
+
+**Vegetarian Chilli**
+Ingredients to buy:
+- Chopped (canned) tomatoes
+- Kidney beans (canned)
+- Mixed grain (such as brown rice or quinoa)
+- Roasted vegetables (you can use a frozen mixed vegetable blend)
+
+This recipe is simple, filling, and should fit well within your $25 budget at most grocery stores. If you’d like, I can walk you through the recipe step by step, or help you adjust the list if you have any of these ingredients at home. Let me know how you’d like to proceed!

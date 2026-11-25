@@ -1,0 +1,46 @@
+=== conversation 1
+--- human
+I only have $15 for groceries this week. Give me one dinner recipe and a shopping list.
+--- ai
+
+CALL get_profile {}
+--- tool
+{}
+--- ai
+
+CALL search_recipes {"query": "easy budget dinner", "ingredients": []}
+--- tool
+[{"recipe_id": "52765", "name": "Chicken Enchilada Casserole", "category": "Chicken", "area": "Mexican", "matched_ingredients": [], "missing_ingredients": ["chicken breasts", "corn tortillas", "enchilada sauce", "shredded monterey jack cheese"]}, {"recipe_id": "53538", "name": "Mango Tropical Salsa", "category": "Side", "area": "", "matched_ingredients": [], "missing_ingredients": ["avocado", "black pepper", "cilantro", "lime juice", "mango", "red onions", "red pepper", "salt", "tomato"]}, {"recipe_id": "52920", "name": "Chicken Marengo", "category": "Chicken", "area": "France", "matched_ingredients": [], "missing_ingredients": ["black olives", "chicken legs", "chicken stock cube", "mushrooms", "olive oil", "parsley", "passata"]}, {"recipe_id": "52978", "name": "Kumpir", "category": "Side", "area": "Turkish", "matched_ingredients": [], "missing_ingredients": ["butter", "cheese", "onion", "potatoes", "red chilli flakes", "red pepper"]}, {"recipe_id": "52769", "name": "Kapsalon", "category": "Lamb", "area": "Netherlands", "matched_ingredients": [], "missing_ingredients": ["cucumber", "doner meat", "fries", "garlic sauce", "gouda cheese", "hotsauce", "lettuce", "tomato"]}]
+--- ai
+
+CALL search_prices {"ingredient": "chicken breasts"}
+CALL search_prices {"ingredient": "corn tortillas"}
+CALL search_prices {"ingredient": "enchilada sauce"}
+CALL search_prices {"ingredient": "shredded monterey jack cheese"}
+--- tool
+[{"product_id": "0028334900000", "name": "Heritage Farm Boneless Skinless Chicken Breasts", "brand": "Heritage Farm", "size": "1 lb", "price": 2.59, "sold_by": "WEIGHT"}, {"product_id": "0001111018028", "name": "Smart Way Fresh Uncooked Thin Sliced Boneless Skinless Chicken Breasts", "brand": "", "size": "1.25 lb", "price": 5.0, "sold_by": "UNIT"}, {"product_id": "0026082900000", "name": "Tyson All Natural Fresh Boneless Skinless Chicken Breasts", "brand": "Tyson", "size": "1 lb", "price": 4.99, "sold_by": "WEIGHT"}, {"product_id": "0025074900000", "name": "PERDUE Fresh Boneless Skinless Chicken Breasts", "brand": "Perdue", "size": "1 lb", "price": 4.99, "sold_by": "WEIGHT"}, {"product_id": "0029082900000", "name": "Simple Truth Organic Boneless & Skinless Fresh Organic Chicken Breasts", "brand": "Simple Truth Organic", "size": "1 lb", "price": 8.99, "sold_by": "WEIGHT"}]
+--- tool
+[{"product_id": "0007373106300", "name": "Mission Super Soft Yellow Corn Tortillas, 30 Count", "brand": "Mission", "size": "30 count", "price": 2.49, "sold_by": "UNIT"}, {"product_id": "0002733100061", "name": "La Banderita Yellow Corn Tortilla 30 Ct", "brand": "La Banderita", "size": "30 ct / 24.9 oz", "price": 2.59, "sold_by": "UNIT"}, {"product_id": "0001111099028", "name": "Kroger Soft Traditional White Corn Tortillas", "brand": "Kroger", "size": "30 ct", "price": 1.99, "sold_by": "UNIT"}, {"product_id": "0007373106002", "name": "Mission Super Soft White Corn Tortillas, 30 Count", "brand": "Mission", "size": "25 oz", "price": 2.49, "sold_by": "UNIT"}, {"product_id": "0004856406000", "name": "Guerrero White Corn Tortillas, 80 Count", "brand": "Guerrero", "size": "66.7 oz", "price": 4.49, "sold_by": "UNIT"}]
+--- tool
+[{"product_id": "0004600086011", "name": "Old El Paso Mild Red Enchilada Sauce", "brand": "Old El Paso", "size": "10 oz", "price": 2.79, "sold_by": "UNIT"}, {"product_id": "0004600086035", "name": "Old El Paso Mild Red Enchilada Sauce", "brand": "Old El Paso", "size": "19 oz", "price": 4.19, "sold_by": "UNIT"}, {"product_id": "0004150111028", "name": "Las Palmas Mild Enchilada Sauce", "brand": "Las Palmas", "size": "28 oz", "price": 2.99, "sold_by": "UNIT"}, {"product_id": "0004150111021", "name": "Las Palmas Medium Green Chile Enchilada Sauce", "brand": "Las Palmas", "size": "28 oz", "price": 2.99, "sold_by": "UNIT"}, {"product_id": "0007152415465", "name": "La Preferida Mild Red Chile Enchilada Sauce", "brand": "La Preferida", "size": "10 oz", "price": 2.29, "sold_by": "UNIT"}]
+--- tool
+[{"product_id": "0001111050202", "name": "Kroger Monterey Jack Shredded Cheese", "brand": "Kroger", "size": "8 oz", "price": 2.0, "sold_by": "UNIT"}, {"product_id": "0001111015134", "name": "Kroger Monterey Jack Shredded Cheese", "brand": "Kroger", "size": "16 oz", "price": 3.69, "sold_by": "UNIT"}, {"product_id": "0001111015122", "name": "Kroger Natural Monterey Jack Shredded Cheese Family Size", "brand": "Kroger", "size": "32 oz", "price": 7.29, "sold_by": "UNIT"}]
+--- ai
+
+CALL estimate_basket {"items": [{"ingredient": "chicken breasts", "product": {"product_id": "0028334900000", "name": "Heritage Farm Boneless Skinless Chicken Breasts", "brand": "Heritage Farm", "size": "1 lb", "price": 2.59, "sold_by": "WEIGHT"}, "pounds": 1}, {"ingredient": "corn tortillas", "product": {"product_id": "0001111099028", "name": "Kroger Soft Traditional White Corn Tortillas", "brand": "Kroger", "size": "30 ct", "price": 1.99, "sold_by": "UNIT"}, "quantity": 1}, {"ingredient": "enchilada sauce", "product": {"product_id": "0007152415465", "name": "La Preferida Mild Red Chile Enchilada Sauce", "brand": "La Preferida", "size": "10 oz", "price": 2.29, "sold_by": "UNIT"}, "quantity": 1}, {"ingredient": "shredded monterey jack cheese", "product": {"product_id": "0001111050202", "name": "Kroger Monterey Jack Shredded Cheese", "brand": "Kroger", "size": "8 oz", "price": 2.0, "sold_by": "UNIT"}, "quantity": 1}], "recipe_ids": ["52765"], "budget": 15.0}
+--- tool
+{"items": [{"product": {"product_id": "0028334900000", "name": "Heritage Farm Boneless Skinless Chicken Breasts", "brand": "Heritage Farm", "size": "1 lb", "price": 2.59, "sold_by": "WEIGHT"}, "pounds": 1, "subtotal": 2.59}, {"product": {"product_id": "0001111099028", "name": "Kroger Soft Traditional White Corn Tortillas", "brand": "Kroger", "size": "30 ct", "price": 1.99, "sold_by": "UNIT"}, "quantity": 1, "subtotal": 1.99}, {"product": {"product_id": "0007152415465", "name": "La Preferida Mild Red Chile Enchilada Sauce", "brand": "La Preferida", "size": "10 oz", "price": 2.29, "sold_by": "UNIT"}, "quantity": 1, "subtotal": 2.29}, {"product": {"product_id": "0001111050202", "name": "Kroger Monterey Jack Shredded Cheese", "brand": "Kroger", "size": "8 oz", "price": 2.0, "sold_by": "UNIT"}, "quantity": 1, "subtotal": 2.0}], "estimated_total": 8.87, "currency": "USD", "budget": 15.0, "within_budget": true, "note": "Estimate only; excludes taxes, fees, and unpriced ingredients. Weight items vary with the actual package weight.", "uncovered": {"Chicken Enchilada Casserole": []}, "all_covered": true}
+--- ai
+Here’s a budget-friendly dinner recipe and shopping list for under $15. Prices are estimates from a Kroger near Cincinnati, OH, and may vary.
+
+Recipe: Chicken Enchilada Casserole
+
+Shopping List:
+- Chicken breasts, 1 lb at $2.59/lb (about $2.59, weight is an estimate)
+- Kroger Soft Traditional White Corn Tortillas, 30 ct, $1.99
+- La Preferida Mild Red Chile Enchilada Sauce, 10 oz, $2.29
+- Kroger Monterey Jack Shredded Cheese, 8 oz, $2.00
+
+Estimated total: $8.87
+
+You’ll have money left over for other groceries! Would you like the step-by-step recipe instructions?

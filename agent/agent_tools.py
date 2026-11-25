@@ -51,11 +51,24 @@ _judge = ChatOpenAI(
 # is rejected instead of being totaled.
 _returned_products = {}
 
+# The search terms that returned each product, by product_id. estimate_basket uses this
+# to refuse a product tagged as a different ingredient than the one it was found for
+# (seen in run 5: ground coriander tagged as "turmeric powder").
+_product_searches = {}
+
+# Judge verdicts, cached by ingredient and the exact products shown, so a repeated
+# search (or a cached Kroger result) does not pay for a second judge call.
+_judge_cache = {}
+
 
 def _matching_products(ingredient, products):
     """Keep only the products the judge says really are the ingredient."""
     if not products:
         return products
+    cache_key = (normalize(ingredient), tuple(p['product_id'] for p in products))
+    if cache_key in _judge_cache:
+        keep = _judge_cache[cache_key]
+        return [p for i, p in enumerate(products) if i in keep]
     listing = "\n".join(f"{i}. {p['name']} ({p['size']})" for i, p in enumerate(products))
     try:
         result = _judge.invoke(JUDGE_PROMPT.format(ingredient=ingredient, listing=listing))
@@ -64,7 +77,91 @@ def _matching_products(ingredient, products):
         # blocking the shopping list; the agent's own product rules still apply.
         return products
     keep = {v.index for v in result.verdicts if v.is_match}
+    _judge_cache[cache_key] = keep
     return [p for i, p in enumerate(products) if i in keep]
+
+
+# ============== Ingredient name matching ==============
+
+# Recipe names are often British; the store and the user use American names. Used so a
+# zucchini on the list covers a recipe's "Courgettes" (run 5 reported it missing).
+# Whole normalized names only: "coriander" alone is left out because it can mean the
+# leaves (cilantro) or the ground seed.
+SYNONYMS = {
+    "courgette": "zucchini", "courgettes": "zucchini",
+    "aubergine": "eggplant", "aubergines": "eggplant",
+    "coriander leaves": "cilantro", "fresh coriander": "cilantro",
+    "spring onion": "green onion", "spring onions": "green onion",
+    "scallion": "green onion", "scallions": "green onion",
+    "minced beef": "ground beef", "beef mince": "ground beef",
+    "minced pork": "ground pork", "pork mince": "ground pork",
+    "minced lamb": "ground lamb", "lamb mince": "ground lamb",
+    "double cream": "heavy cream", "single cream": "light cream",
+    "chick peas": "chickpeas", "garbanzo beans": "chickpeas",
+    "rocket": "arugula", "beetroot": "beets", "swede": "rutabaga",
+    "mangetout": "snow peas", "prawns": "shrimp", "king prawns": "shrimp",
+    "plain flour": "all purpose flour", "caster sugar": "superfine sugar",
+    "icing sugar": "powdered sugar", "tinned tomatoes": "canned tomatoes",
+    "tinned tomatos": "canned tomatoes", "chopped tomatoes": "diced tomatoes",
+    "red chilli": "red chili", "green chilli": "green chili",
+}
+
+
+def _alt_names(name):
+    """A normalized ingredient name plus its American equivalent, if it has one."""
+    return {name, SYNONYMS.get(name, name)}
+
+
+# Words that turn a food into a different product: the user's "chicken" does not cover
+# a recipe's "chicken stock", and a "garlic" item does not cover "garlic powder".
+DERIVED_WORDS = {
+    "stock", "broth", "bouillon", "cube", "cubes", "sauce", "paste", "powder",
+    "oil", "vinegar", "juice", "extract", "flakes", "granules", "seasoning",
+}
+
+# Descriptive words ignored when checking a product's tag against the search that found
+# it, so "ground cumin" is not accepted for a product found by "ground coriander".
+DESCRIPTOR_WORDS = {
+    "ground", "fresh", "dried", "powder", "chopped", "diced", "sliced", "minced", "whole",
+    "large", "small", "red", "green", "yellow", "white", "black", "leaves", "leaf",
+    "tinned", "canned", "frozen", "raw", "plain", "sweet", "hot", "smoked", "organic",
+    "of", "and",
+}
+
+
+def _content_words(name):
+    """The words of a normalized name and its American equivalent, minus descriptors."""
+    words = set()
+    for alt in _alt_names(name):
+        words |= set(alt.split())
+    return words - DESCRIPTOR_WORDS
+
+
+def _tag_fits_product(tag, product):
+    """True if a basket item's ingredient tag fits the search(es) that found the product.
+
+    Cheap check first: the tag shares a real word with a search term ("chicken thighs"
+    for a product found by "chicken thighs"). Otherwise, for a renamed search such as
+    zucchini tagged "Courgettes", the relevance judge decides.
+    """
+    tag_words = _content_words(tag)
+    for term in _product_searches.get(product['product_id'], ()):
+        if tag_words & _content_words(term):
+            return True
+    if _matching_products(tag, [product]):
+        _product_searches.setdefault(product['product_id'], set()).add(tag)
+        return True
+    return False
+
+# Store-bought products whose labels can hide allergens the recipe never names.
+LABEL_WORDS = {"paste", "sauce", "pesto", "satay", "dressing", "stock", "bouillon"}
+
+
+def _label_items(recipe):
+    """The recipe ingredients that are store-bought pastes, sauces or stocks."""
+    return [item["ingredient"] for item in recipe["ingredients"]
+            if set(normalize(item["ingredient"]).split()) & LABEL_WORDS]
+
 
 @tool
 def search_recipes(query: str, ingredients: list[str]) -> list[dict]:
@@ -85,6 +182,10 @@ def search_recipes(query: str, ingredients: list[str]) -> list[dict]:
     ingredients it uses (matched_ingredients), and the ingredients the user still
     needs (missing_ingredients). Instructions are NOT included: call get_recipe with
     the recipe_id when the user picks a recipe or wants step-by-step cooking help.
+
+    check_label lists the recipe's store-bought pastes, sauces and stocks. Their labels
+    can hide allergens the recipe does not name: if the user has ANY allergy and you
+    recommend this recipe, tell them to check each of these labels for that allergen.
     """
 
     recipes = []
@@ -92,14 +193,17 @@ def search_recipes(query: str, ingredients: list[str]) -> list[dict]:
     results = retriever.search(query, ingredients)
 
     for result in results:
-        
+
         recipe_dict = {
             'recipe_id': result['recipe_id'],
             'name': result['recipe']['name'],
             'category': result['recipe']['category'],
             'area': result['recipe']['area'],
             'matched_ingredients': result['matched_ingredients'],
-            'missing_ingredients': result['missing_ingredients']
+            'missing_ingredients': result['missing_ingredients'],
+            # Put the allergen-label reminder next to the recipe itself, where the model
+            # reads it (run 5 dropped the curry paste warning when it was only in the prompt).
+            'check_label': _label_items(result['recipe'])
 
         }
 
@@ -167,6 +271,7 @@ def search_prices(ingredient: str) -> list[dict]:
         # products the model made up and always use the real price.
         for p in matches:
             _returned_products[p['product_id']] = p
+            _product_searches.setdefault(p['product_id'], set()).add(normalize(ingredient))
         return matches
 
     except (RuntimeError, ValueError) as e:
@@ -183,11 +288,13 @@ STAPLES = {
 def _user_has(ingredient, user_words):
     """True if every word of something the user has appears in the recipe ingredient.
 
-    So a user's "chicken" covers a recipe's "chicken thighs". Only used for the
-    user's own ingredients; basket items must name the recipe ingredient exactly.
+    So a user's "chicken" covers a recipe's "chicken thighs", but not "chicken stock":
+    a derived product (stock, sauce, powder, ...) is covered only if the user's own
+    item names it too.
     """
     words = set(ingredient.split())
-    return any(term and term <= words for term in user_words)
+    derived = words & DERIVED_WORDS
+    return any(term and term <= words and derived <= term for term in user_words)
 
 
 def check_coverage(items, recipe_ids, user_has):
@@ -206,8 +313,11 @@ def check_coverage(items, recipe_ids, user_has):
         uncovered = []
         for item in recipe["ingredients"]:
             name = normalize(item["ingredient"])
-            if (not name or name in STAPLES or name in in_basket
-                    or _user_has(name, basket_words) or _user_has(name, user_words)):
+            if not name or name in STAPLES:
+                continue
+            # Check the recipe's own name and its American equivalent (courgettes -> zucchini).
+            if any(alt in in_basket or _user_has(alt, basket_words) or _user_has(alt, user_words)
+                   for alt in _alt_names(name)):
                 continue
             uncovered.append(item["ingredient"])
         coverage[recipe["name"]] = uncovered
@@ -254,8 +364,37 @@ def estimate_basket(items: list[dict], recipe_ids: list[str],
             return {'error': f"{product.get('name', 'A product')} was not returned by search_prices. "
                              "Only use products exactly as search_prices returned them. If the store "
                              "has nothing for an ingredient, leave it out and tell the user it was not found."}
+        # The product must be for the ingredient it is tagged as, not just any searched one.
+        tag = normalize(entry.get("ingredient") or "")
+        # A real product_id under a made-up name (seen November 24: "Badia Ground Cumin" sent
+        # with the product_id of the Badia Smoked Paprika it had found). Say so directly, or
+        # the model cannot connect the error to what it thinks it sent and resends it.
+        # Only a name with a word the real product lacks counts; a trimmed name is fine.
+        sent_name = product.get("name")
+        if sent_name and set(normalize(sent_name).split()) - set(normalize(stored['name']).split()):
+            return {'error': f"product_id {stored['product_id']} belongs to {stored['name']}, not {sent_name}. "
+                             "Copy each product exactly as search_prices returned it. If no search "
+                             f"returned a product for {entry.get('ingredient')}, call search_prices for it."}
+        if tag and not _tag_fits_product(tag, stored):
+            searched = ", ".join(sorted(_product_searches.get(stored['product_id'], ()))) or "another ingredient"
+            return {'error': f"{stored['name']} was found by searching for {searched}, and it is not "
+                             f"{entry.get('ingredient')}. Call search_prices for {entry.get('ingredient')} "
+                             "and use a product from that search. If the store has none, either leave it "
+                             "out, or buy a real substitute tagged as what it actually is (for example "
+                             "tag brown rice as 'brown rice'), and tell the user what is missing or "
+                             "substituted."}
         checked.append({**entry, "product": stored})
-    items = checked
+
+    # Never charge the user for something they said they already have (run 5 priced
+    # basmati rice for a user who has rice). Dropped items are reported back.
+    user_words = [set(normalize(i).split()) for i in (user_has or [])]
+    items, already_have = [], []
+    for entry in checked:
+        tag = normalize(entry.get("ingredient") or "")
+        if tag and any(_user_has(alt, user_words) for alt in _alt_names(tag)):
+            already_have.append(entry.get("ingredient"))
+        else:
+            items.append(entry)
 
     try:
         result = estimate_selected_basket(items, budget)
@@ -265,6 +404,10 @@ def estimate_basket(items: list[dict], recipe_ids: list[str],
     except KeyError as e:
         return {'error': f"Unknown recipe_id {e}. Use a recipe_id from search_recipes."}
 
+    if already_have:
+        result['removed_user_has'] = already_have
+        result['removed_note'] = ("These were removed because the user already has them. "
+                                  "Do not list or price them.")
     result['uncovered'] = coverage
     result['all_covered'] = not any(coverage.values())
     if not result['all_covered']:

@@ -1,0 +1,7 @@
+=== conversation 1
+--- human
+I have $5 to feed 10 people at a dinner party. What should I buy?
+--- ai
+That budget is extremely tight—$5 is not enough to feed 10 people a full dinner, even with the simplest recipes and the cheapest ingredients. For a realistic dinner for 10, you would typically need at least $20–$30, even for basic pasta or rice dishes.
+
+With $5, you could buy ingredients for a very simple snack or side (like popcorn or a basic salad), but not a full meal. Would you like me to show you what you could make for $5, or would you like to see what budget you’d need for a basic dinner for 10?

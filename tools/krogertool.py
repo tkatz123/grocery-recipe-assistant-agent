@@ -108,13 +108,27 @@ def get_client():
                         st.secrets["kroger"]["client_secret"])
 
 
+# Search results are cached in memory for an hour, keyed by search term, so repeated
+# searches in a demo or a test run reuse the first answer instead of calling Kroger
+# again and tripping its rate limit. Errors are never cached.
+CACHE_SECONDS = 3600
+_search_cache = {}
+
+
 def search_grocery_prices(ingredient: str, limit: int = 5) -> dict:
     """AI tool: search live products/prices for one ingredient at a US store.
 
     Returns options for relevance/package selection; does not automatically
     equate a recipe measure with a purchasable package.
     """
-    return get_client().search(ingredient, limit)
+    key = (ingredient.strip().casefold(), limit) if isinstance(ingredient, str) else None
+    cached = _search_cache.get(key)
+    if cached is not None and time.monotonic() - cached[0] < CACHE_SECONDS:
+        return cached[1]
+    result = get_client().search(ingredient, limit)
+    if key is not None:
+        _search_cache[key] = (time.monotonic(), result)
+    return result
 
 
 def estimate_selected_basket(items: list[dict], budget: float | None = None) -> dict:

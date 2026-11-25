@@ -1,0 +1,34 @@
+=== conversation 1
+--- human
+I have chicken, rice and garlic. Suggest one recipe I can make.
+--- ai
+
+CALL get_profile {}
+--- tool (get_profile)
+{}
+--- ai
+
+CALL search_recipes {"query": "", "ingredients": ["chicken", "rice", "garlic"]}
+--- tool (search_recipes)
+[{"recipe_id": "53358", "name": "Chicken Mandi", "category": "Chicken", "area": "India", "matched_ingredients": ["chicken", "garlic"], "missing_ingredients": ["basmati rice", "bay leaf", "cardamom", "cinnamon", "cloves", "coriander", "green chilli", "oil", "onion", "pepper", "salt", "turmeric powder", "water"], "check_label": []}, {"recipe_id": "52774", "name": "Pad See Ew", "category": "Chicken", "area": "Thai", "matched_ingredients": ["chicken", "garlic"], "missing_ingredients": ["chinese broccoli", "dark soy sauce", "egg", "oyster sauce", "peanut oil", "rice stick noodles", "soy sauce", "sugar", "water", "white vinegar"], "check_label": ["dark soy sauce", "oyster sauce", "soy sauce"]}, {"recipe_id": "52795", "name": "Chicken Handi", "category": "Chicken", "area": "India", "matched_ingredients": ["chicken", "garlic"], "missing_ingredients": ["chilli powder", "coriander seeds", "cream", "cumin seeds", "fenugreek", "garam masala", "ginger paste", "green chilli", "onion", "salt", "tomatoes", "turmeric powder", "vegetable oil", "yogurt"], "check_label": ["Ginger paste"]}, {"recipe_id": "53192", "name": "Panang chicken curry (kaeng panang gai)", "category": "Chicken", "area": "Thai", "matched_ingredients": ["garlic"], "missing_ingredients": ["basil leaves", "brown sugar", "chicken breast", "coconut milk", "dried red chillies", "fish sauce", "galangal", "green beans", "ground coriander", "ground cumin", "ground nutmeg", "jasmine rice", "lemongrass", "lime", "makrut lime leaves", "panang curry paste", "peanuts", "red chilli", "shrimp paste"], "check_label": ["Panang Curry Paste", "Fish Sauce", "Shrimp Paste"]}, {"recipe_id": "53435", "name": "Stuffed Grape Leaves", "category": "Side", "area": "", "matched_ingredients": ["rice"], "missing_ingredients": ["chicken stock", "cinnamon", "dill", "ground allspice", "lemon", "olive oil", "onion", "pepper", "pine nuts", "raisins", "salt", "tomato sauce"], "check_label": ["Chicken Stock", "Tomato Sauce"]}]
+--- ai
+You can make Chicken Mandi, an Indian chicken and rice dish. It uses your chicken and garlic, and you'll need to get a few more ingredients (like basmati rice and some spices). Would you like a shopping list and the recipe, or step-by-step cooking help?
+--- human
+Sounds good, let's make it. Walk me through it.
+--- ai
+
+CALL get_recipe {"recipe_id": "53358"}
+--- tool (get_recipe)
+{"id": "53358", "name": "Chicken Mandi", "category": "Chicken", "area": "India", "instructions": "1. Clean and cut the chicken; marinate briefly with salt, turmeric and a little oil.\r\n2. Rinse and soak basmati rice 20–30 minutes.\r\n3. In a large pot, heat ghee/oil. Fry chopped onion until golden. Add minced garlic and green chillies and fry 1–2 min.\r\n4. Add whole spices (cardamom, cloves, cinnamon, bay leaves) and ground spices (coriander, cumin). Stir until fragrant.\r\n5. Add chicken pieces, brown lightly and add enough water/chicken stock to cover. Simmer until chicken is nearly cooked.\r\n6. Remove chicken; measure remaining liquid and add soaked rice. Bring to a boil, then reduce heat, cover and cook rice until almost done.\r\n7. Return the chicken to the rice pot on top, cover tightly and steam on low for 10–15 min so flavors meld.\r\n8. (Optional) For authentic smoky aroma: heat a small charcoal until red hot, place it on a small foil cup in the centre of the pot, add a tsp of butter/oil on the coal then cover immediately to trap smoke for 5–10 minutes. Remove coal.\r\n9. Garnish with fried onions, chopped coriander and serve with chutney or raita.", "tags": [], "image": "https://www.themealdb.com/images/media/meals/er4d081765186828.jpg", "youtube": "", "source": "", "ingredients": [{"ingredient": "Chicken", "measure": "1"}, {"ingredient": "Basmati Rice", "measure": "2 cups"}, {"ingredient": "Water", "measure": "4 cups"}, {"ingredient": "Onion", "measure": "1 large"}, {"ingredient": "Garlic", "measure": "4 cloves"}, {"ingredient": "Green Chilli", "measure": "2"}, {"ingredient": "Salt", "measure": "1 ½ tsp"}, {"ingredient": "Oil", "measure": "3 tablespoons"}, {"ingredient": "Turmeric Powder", "measure": "1 tablespoon"}, {"ingredient": "Coriander", "measure": "1 teaspoon"}, {"ingredient": "Cardamom", "measure": "½ tbsp"}, {"ingredient": "Cloves", "measure": "¼ teaspoon"}, {"ingredient": "Cinnamon", "measure": "1/2 tsp"}, {"ingredient": "Pepper", "measure": "1 tsp"}, {"ingredient": "Bay Leaf", "measure": "2"}]}
+--- ai
+Great choice! Here’s step 1 for Chicken Mandi:
+
+Step 1: Clean and cut the chicken; marinate briefly with salt, turmeric, and a little oil.
+
+Let me know when you’re ready for the next step!
+--- human
+Done, what's next?
+--- ai
+Step 2: Rinse and soak 2 cups of basmati rice for 20–30 minutes.
+
+Let me know when you’re ready to continue!

@@ -71,7 +71,7 @@ Be honest about the limits:
 Before you send ANY answer, check these three things:
 1. Every product on the list really is the ingredient it is tagged for.
 2. If the user gave a budget, the last estimate_basket said within_budget true (or you said plainly that nothing fits).
-3. If the user mentioned an allergy and any recipe you recommend uses a store-bought paste or sauce (curry paste, fish sauce, satay or stir-fry sauce, pesto), your answer includes: "Check the label on the [paste or sauce] for [allergen]: store-bought versions can contain it." This applies even when you did not build a shopping list.
+3. If the user mentioned an allergy (or has one saved) and any recipe you recommend has items in its check_label list from search_recipes (store-bought pastes, sauces and stocks such as curry paste, fish sauce, satay or stir-fry sauce, pesto), your answer includes, for each one: "Check the label on the [paste or sauce] for [allergen]: store-bought versions can contain it." This applies even when you did not build a shopping list.
 
 Keep answers short and easy to scan: the recipes, the shopping list with prices, and the total.
 """

@@ -1,0 +1,30 @@
+=== conversation 1
+--- human
+I'm allergic to peanuts. I have chicken and coconut milk. What Thai dish can I make?
+--- ai
+
+CALL get_profile {}
+--- tool (get_profile)
+{}
+--- ai
+
+CALL save_profile {"allergies": ["peanuts"]}
+--- tool (save_profile)
+{"allergies": ["peanuts"]}
+--- ai
+
+CALL search_recipes {"query": "Thai chicken coconut milk", "ingredients": ["chicken", "coconut milk"]}
+--- tool (search_recipes)
+[{"recipe_id": "53192", "name": "Panang chicken curry (kaeng panang gai)", "category": "Chicken", "area": "Thai", "matched_ingredients": ["coconut milk"], "missing_ingredients": ["basil leaves", "brown sugar", "chicken breast", "dried red chillies", "fish sauce", "galangal", "garlic", "green beans", "ground coriander", "ground cumin", "ground nutmeg", "jasmine rice", "lemongrass", "lime", "makrut lime leaves", "panang curry paste", "peanuts", "red chilli", "shrimp paste"], "check_label": ["Panang Curry Paste", "Fish Sauce", "Shrimp Paste"]}, {"recipe_id": "53207", "name": "Tom kha gai", "category": "Chicken", "area": "Thai", "matched_ingredients": ["coconut milk"], "missing_ingredients": ["birds eye chillies", "caster sugar", "chicken stock", "chicken thighs", "coriander leaves", "fish sauce", "galangal paste", "lemongrass stalks", "lime", "lime leaves", "oyster mushrooms", "rice"], "check_label": ["Chicken Stock", "Galangal Paste", "Fish Sauce"]}, {"recipe_id": "52814", "name": "Thai Green Curry", "category": "Chicken", "area": "Thai", "matched_ingredients": ["chicken", "coconut milk"], "missing_ingredients": ["basil", "garlic", "green beans", "lime", "potatoes", "rice", "sugar", "sunflower oil", "thai fish sauce", "thai green curry paste"], "check_label": ["Thai green curry paste", "Thai fish sauce"]}, {"recipe_id": "53204", "name": "Red curry chicken kebabs", "category": "Chicken", "area": "Thai", "matched_ingredients": ["coconut milk"], "missing_ingredients": ["chicken breasts", "courgettes", "lime", "red onions", "red pepper", "thai red curry paste"], "check_label": ["Thai Red Curry Paste"]}, {"recipe_id": "53208", "name": "Thai coconut & veg broth", "category": "Vegetarian", "area": "Thai", "matched_ingredients": ["coconut milk"], "missing_ingredients": ["bean sprouts", "brown sugar", "carrots", "cherry tomatoes", "chinese leaf", "coriander", "egg noodles", "lime", "spring onions", "thai red curry paste", "vegetable oil", "vegetable stock"], "check_label": ["Thai Red Curry Paste", "Vegetable Stock"]}]
+--- ai
+You're allergic to peanuts, and you have chicken and coconut milk. Here are two Thai dishes you can make that use both:
+
+1. Thai Green Curry (with chicken and coconut milk)
+   - Missing ingredients: basil, garlic, green beans, lime, potatoes, rice, sugar, Thai fish sauce, Thai green curry paste.
+   - Check the label on the Thai green curry paste and Thai fish sauce for peanuts: store-bought versions can contain them.
+
+2. Tom Kha Gai (Thai coconut chicken soup)
+   - Missing ingredients: birds eye chillies, caster sugar, chicken stock, chicken thighs, coriander leaves, fish sauce, galangal paste, lemongrass stalks, lime, lime leaves, oyster mushrooms, rice.
+   - Check the label on the chicken stock, galangal paste, and fish sauce for peanuts: store-bought versions can contain them.
+
+Would you like a shopping list and prices for one of these recipes, or help making it with what you have? Let me know which one interests you!

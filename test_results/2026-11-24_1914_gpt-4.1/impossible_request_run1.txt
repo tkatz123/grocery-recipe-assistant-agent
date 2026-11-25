@@ -1,0 +1,7 @@
+=== conversation 1
+--- human
+I have $5 to feed 10 people at a dinner party. What should I buy?
+--- ai
+$5 is not enough to feed 10 people a full dinner—most basic recipes for 10 will need at least $15–$20, even for simple pasta or rice dishes. With $5, you could provide a very basic snack (like popcorn or bread with butter), but not a full meal.
+
+Would you like ideas for a simple snack for $5, or can you increase your budget for a proper dinner? For a real meal for 10, I recommend at least $20. Let me know how you’d like to proceed!
